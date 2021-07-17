@@ -12,6 +12,7 @@ const CLIENT_TWITCHID = "0eoml14jrvzzwdfztbq29fhtml2xjg";
 const CLIENT_TWITCHSECRET = "rtfj833leivnn52xulhd0pifsoe1ez";
 
 const STATE = "fdzefzefze";
+
 function handleLogin()
 {
     // http://.../auth?response_type=code&client_id=...&scope=...&state=...
@@ -73,8 +74,12 @@ function handleFbSuccess()
     echo file_get_contents($userUrl, false, $context);
 }
 
-function handleTwitchSuccess() {
-    echo 'test';
+function handleTwitchSuccess() 
+{
+    ["state" => $state, "code" => $code] = $_GET;
+    if ($state !== STATE) {
+        throw new RuntimeException("{$state} : invalid state");
+    }    
 }
 
 function getUser($params)
