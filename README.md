@@ -6,9 +6,9 @@ Goal -> create an SDK with 2 publics provider and the Facebook provider.
 
 ## Provider service used :
 
-.._ Facebook -> https://developers.facebook.com/docs/facebook-login/web/
-.._ Github ->
-..\* Discord ->
+1. Facebook -> https://developers.facebook.com/docs/facebook-login/web/
+2. Github ->
+3. Discord ->
 
 ## Run
 
