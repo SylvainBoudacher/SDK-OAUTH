@@ -1,4 +1,7 @@
 <?php
+
+require("URLBuilder.php");
+
 // OATH
 const CLIENT_ID = "client_60a3778e70ef02.05413444";
 const CLIENT_SECRET = "cd989e9a4b572963e23fe39dc14c22bbceda0e60";
@@ -21,7 +24,6 @@ function handleLogin()
 {
     // http://.../auth?response_type=code&client_id=...&scope=...&state=...
     echo "<h1>Login with OAUTH</h1>";
-    
     // Oauth
     echo "<a href='http://localhost:8081/auth?response_type=code"
         . "&client_id=" . CLIENT_ID
@@ -36,10 +38,10 @@ function handleLogin()
         . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a></br>";
 
     // Twitch
-    echo "<a href='".getTwitchLink()."' >Se connecter avec Twitch</a><br>";
+    echo "<a href='".URLBuilder::getTwitchLink()."' >Se connecter avec Twitch</a><br>";
 
     // Discord
-    echo "<a href='".getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
+    echo "<a href='".URLBuilder::getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
 }
 
 function getUser($params)
@@ -117,7 +119,7 @@ function handleTwitchSuccess()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => accessTokenTwitch($code),
+    CURLOPT_URL => URLBuilder::getAccessTokenTwitch($code),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -133,32 +135,6 @@ function handleTwitchSuccess()
     echo $response;
     
 }
-
-function getTwitchLink() : string {
-    // Authorization code grant
-    $url = "https://id.twitch.tv/oauth2/authorize?";
-    $url .= "client_id=".CLIENT_TWITCHID;
-    $url .= "&scope=channel_read";
-    $url .= "&response_type=code";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/twitchauth-success";
-    
-    return $url;
-}
-
-function accessTokenTwitch($code) : string {
-    //accessTokenTwitch
-    $url = 'https://id.twitch.tv/oauth2/token?';
-    $url .= "client_id=".CLIENT_TWITCHID;
-    $url .= "&client_secret=".CLIENT_TWITCHSECRET;
-    $url .= "&code=$code";
-    $url .= "&grant_type=authorization_code";
-    $url .= "&redirect_uri=https://localhost/twitchauth-success";
-
-    return $url;
-}
-
-
 
 
 // Discord process
@@ -194,31 +170,7 @@ function handleDiscordSuccess() {
 }
 
 
-function getDiscordOAuthLink() : string {
-    
-    // Authorization code grant
-    $url = "https://discord.com/api/oauth2/authorize";
-    $url .= "?response_type=code";
-    $url .= "&client_id=".CLIENT_DISCORD_ID;
-    $url .= "&scope=identify";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/discord-auth-success";
-    $url .= "&prompt=consent";
-
-    return $url;
-}
-
-
-
-
-
-/**
- * AUTH CODE WORKFLOW
- * => Generate link (/login)
- * => Get Code (/auth-success)
- * => Exchange Code <> Token (/auth-success)
- * => Exchange Token <> User info (/auth-success)
- */
+// Custom router
 
 $route = strtok($_SERVER["REQUEST_URI"], "?");
 switch ($route) {
