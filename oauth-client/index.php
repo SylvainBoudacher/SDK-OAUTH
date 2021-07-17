@@ -69,6 +69,10 @@ function handleFbSuccess()
     echo file_get_contents($userUrl, false, $context);
 }
 
+function handleTwitchSuccess() {
+    echo 'test';
+}
+
 function getUser($params)
 {
     $url = "http://oauth-server:8081/token?client_id=" . CLIENT_ID . "&client_secret=" . CLIENT_SECRET . "&" . http_build_query($params);
@@ -104,7 +108,7 @@ switch ($route) {
         handleFbSuccess();
         break;
     case '/twitchauth-success':
-        handleFbSuccess();
+        handleTwitchSuccess();
         break;
     case '/auth-cancel':
         handleError();
