@@ -33,6 +33,8 @@ function handleLogin()
     // Twitch
     echo "<a href='https://id.twitch.tv/oauth2/authorize?"
         . "client_id=" . CLIENT_TWITCHID
+        . "&scope=user_read"
+        . "&response_type=code"
         . "&redirect_uri=https://localhost/twitchauth-success'>Se connecter avec Twitch</a>";
 }
 
