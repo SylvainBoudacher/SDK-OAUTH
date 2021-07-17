@@ -18,27 +18,37 @@ const CLIENT_TWITCHSECRET = "rtfj833leivnn52xulhd0pifsoe1ez";
 const CLIENT_DISCORD_ID = "865976478662787072";
 const CLIENT_DISCORD_SECRET = "hjYqMBj76NilE8Jnfd_MTF1hgUfDgDAa";
 
+// State : To protecte against CSRF attacks
 const STATE = "fdzefzefze";
 
+// OAuth Links used inside this SDK
+const O_AUTH_APIS = [
+    "homeMade" => "http://localhost:8081/auth?response_type=code",
+    "discord" => "https://discord.com/api/oauth2/authorize?response_type=code",
+    "twitch" => "https://id.twitch.tv/oauth2/authorize?response_type=code",
+    "facebook" => "https://www.facebook.com/v2.10/dialog/oauth?response_type=code"
+];
+
 function handleLogin() {
-    // http://.../auth?response_type=code&client_id=...&scope=...&state=...
-    echo "<h1>Login with OAUTH</h1>";
 
-    // Oauth
-    echo "<a href='http://localhost:8081/auth?response_type=code"
-        . "&client_id=" . CLIENT_ID
-        . "&scope=basic"
-        . "&state=" . STATE . "'>Se connecter avec Oauth Server</a></br>";
+    $homeMade = URLBuilder::getOAuthToken(O_AUTH_APIS["homeMade"], CLIENT_ID, "basic", null, STATE);
+    $discordLink = URLBuilder::getOAuthToken(O_AUTH_APIS["discord"], CLIENT_DISCORD_ID, "identify", "https://localhost/discord-auth-success", STATE);
+    $twitchLink = URLBuilder::getOAuthToken(O_AUTH_APIS["twitch"], CLIENT_TWITCHID, "channel_read", "https://localhost/twitchauth-success", STATE);
+    $FbLink = URLBuilder::getOAuthToken(O_AUTH_APIS["facebook"], CLIENT_FBID, "email", "https://localhost/fbauth-success", STATE);
 
-    // Facebook
-    echo "<a href='".URLBuilder::getFacebookLink()."'>Se connecter avec Facebook</a></br>";
+    $html = "<h1>Login with OAUTH</h1>
+    <a href='.$homeMade.'>Se connecter avec Oauth fait maison</a><br>
+    <a href='".$FbLink."'>Se connecter avec Facebook</a></br>
+    <a href='".$twitchLink."' >Se connecter avec Twitch</a><br>
+    <a href='".$discordLink."' >Se connecter avec Discord</a>";
 
-    // Twitch
-    echo "<a href='".URLBuilder::getTwitchLink()."' >Se connecter avec Twitch</a><br>";
-
-    // Discord
-    echo "<a href='".URLBuilder::getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
+    echo $html;
 }
+
+
+
+
+// Home made OAuth processes
 
 function getUser($params) {
     $url = "http://oauth-server:8081/token?client_id=" . CLIENT_ID . "&client_secret=" . CLIENT_SECRET . "&" . http_build_query($params);
@@ -71,6 +81,8 @@ function handleSuccess() {
         "code" => $code,
     ]);
 }
+
+
 
 
 // Facebook process
@@ -130,6 +142,8 @@ function handleTwitchSuccess() {
 }
 
 
+
+
 // Discord process
 
 function handleDiscordSuccess() {
@@ -161,6 +175,8 @@ function handleDiscordSuccess() {
     curl_close($curl);
     echo $response;
 }
+
+
 
 
 // Custom router
