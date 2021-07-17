@@ -84,7 +84,7 @@ function handleTwitchSuccess()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://id.twitch.tv/oauth2/token?client_id=0eoml14jrvzzwdfztbq29fhtml2xjg&client_secret=rtfj833leivnn52xulhd0pifsoe1ez&code='.$code.'&grant_type=authorization_code&redirect_uri=https://localhost/twitchauth-success',
+    CURLOPT_URL => accessTokenTwitch($code),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
