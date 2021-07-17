@@ -7,8 +7,8 @@ Goal -> create an SDK with 2 publics provider and the Facebook provider.
 ## Provider service used :
 
 1. Facebook -> https://developers.facebook.com/docs/facebook-login/web/
-2. Github ->
-3. Discord ->
+2. Twitch -> (https://dev.twitch.tv/docs/authentication)
+3. Discord -> (https://discord.com/developers/docs/intro)
 
 ## Run
 
