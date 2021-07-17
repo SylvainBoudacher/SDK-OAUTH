@@ -26,7 +26,7 @@ function handleLogin()
         . "&state=" . STATE
         . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a>";
 
-    echo "<a href='".getDiscordLink()."' >Se connecter avec Discord</a>";
+    echo "<a href='".getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
 }
 
 function handleError()
@@ -130,12 +130,50 @@ switch ($route) {
 }
 
 function handleDiscordSuccess() {
-    echo "Trigger de la fonction discord success pour test";
-    die();
+    ["state" => $state, "code" => $code] = $_GET;
+    if ($state !== STATE) {
+        throw new RuntimeException("{$state} : invalid discord state");
+    }
+    // // https://auth-server/token?grant_type=authorization_code&code=...&client_id=..&client_secret=...
+    // $url = "https://graph.facebook.com/oauth/access_token?grant_type=authorization_code&code={$code}&client_id=" . CLIENT_FBID . "&client_secret=" . CLIENT_FBSECRET."&redirect_uri=https://localhost/fbauth-success";
+
+    // $result = file_get_contents($url);
+    // $resultDecoded = json_decode($result, true);
+    // ["access_token"=> $token] = $resultDecoded;
+    // $userUrl = "https://graph.facebook.com/me?fields=id,name,email";
+    // $context = stream_context_create([
+    //     'http' => [
+    //         'header' => 'Authorization: Bearer ' . $token
+    //     ]
+    // ]);
+    // echo file_get_contents($userUrl, false, $context);
+
+    $curl = curl_init();
+
+    curl_setopt_array($curl, array(
+    CURLOPT_URL => 'https://discord.com/api/oauth2/token',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => '',
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 0,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => 'POST',
+    CURLOPT_POSTFIELDS => 'client_id='.CLIENT_DISCORD_ID.'&client_secret='.CLIENT_DISCORD_SECRET.'&grant_type=authorization_code&code='.$code.'&redirect_uri=https%3A%2F%2Flocalhost%2Fdiscord-auth-success',
+    CURLOPT_HTTPHEADER => array(
+        'Content-Type: application/x-www-form-urlencoded',
+        'Cookie: __dcfduid=7b4f678bb76e4fcc8813cdb6b85fe223'
+    ),
+    ));
+
+    $response = curl_exec($curl);
+
+    curl_close($curl);
+    echo $response;
 }
 
 
-function getDiscordLink() : string {
+function getDiscordOAuthLink() : string {
     // Authorization code grant
     $url = "https://discord.com/api/oauth2/authorize";
     $url .= "?response_type=code";
