@@ -16,15 +16,21 @@ function handleLogin()
 {
     // http://.../auth?response_type=code&client_id=...&scope=...&state=...
     echo "<h1>Login with OAUTH</h1>";
+
+    // Oauth
     echo "<a href='http://localhost:8081/auth?response_type=code"
         . "&client_id=" . CLIENT_ID
         . "&scope=basic"
-        . "&state=" . STATE . "'>Se connecter avec Oauth Server</a>";
+        . "&state=" . STATE . "'>Se connecter avec Oauth Server</a></br>";
+
+    // Facebook
     echo "<a href='https://www.facebook.com/v2.10/dialog/oauth?response_type=code"
         . "&client_id=" . CLIENT_FBID
         . "&scope=email"
         . "&state=" . STATE
-        . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a>";
+        . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a></br>";
+
+    // Twitch
     echo "<a href='https://id.twitch.tv/oauth2/authorize?"
         . "client_id=" . CLIENT_TWITCHID
         . "&redirect_uri=https://localhost/twitchauth-success'>Se connecter avec Twitch</a>";
