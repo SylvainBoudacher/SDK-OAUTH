@@ -61,17 +61,17 @@ function handleFbSuccess()
         throw new RuntimeException("{$state} : invalid state");
     }
     // https://auth-server/token?grant_type=authorization_code&code=...&client_id=..&client_secret=...
-    $url = "https://graph.facebook.com/oauth/access_token?grant_type=authorization_code&code={$code}&client_id=" . CLIENT_FBID . "&client_secret=" . CLIENT_FBSECRET."&redirect_uri=https://localhost/fbauth-success";
-    $result = file_get_contents($url);
-    $resultDecoded = json_decode($result, true);
-    ["access_token"=> $token] = $resultDecoded;
-    $userUrl = "https://graph.facebook.com/me?fields=id,name,email";
-    $context = stream_context_create([
-        'http' => [
-            'header' => 'Authorization: Bearer ' . $token
-        ]
-    ]);
-    echo file_get_contents($userUrl, false, $context);
+    // $url = "https://graph.facebook.com/oauth/access_token?grant_type=authorization_code&code={$code}&client_id=" . CLIENT_FBID . "&client_secret=" . CLIENT_FBSECRET."&redirect_uri=https://localhost/fbauth-success";
+    // $result = file_get_contents($url);
+    // $resultDecoded = json_decode($result, true);
+    // ["access_token"=> $token] = $resultDecoded;
+    // $userUrl = "https://graph.facebook.com/me?fields=id,name,email";
+    // $context = stream_context_create([
+    //     'http' => [
+    //         'header' => 'Authorization: Bearer ' . $token
+    //     ]
+    // ]);
+    // echo file_get_contents($userUrl, false, $context);
 }
 
 function handleTwitchSuccess() 
@@ -80,6 +80,25 @@ function handleTwitchSuccess()
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
     }    
+    
+    $curl = curl_init();
+
+    curl_setopt_array($curl, array(
+    CURLOPT_URL => 'https://id.twitch.tv/oauth2/token?client_id=0eoml14jrvzzwdfztbq29fhtml2xjg&client_secret=rtfj833leivnn52xulhd0pifsoe1ez&code='.$code.'&grant_type=authorization_code&redirect_uri=https://localhost/twitchauth-success',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => '',
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 0,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => 'POST',
+    ));
+
+    $response = curl_exec($curl);
+
+    curl_close($curl);
+    echo $response;
+    
 }
 
 function getUser($params)
@@ -107,6 +126,18 @@ function getTwitchLink() : string {
     $url .= "&state=".STATE;
     $url .= "&redirect_uri=https://localhost/twitchauth-success";
     
+    return $url;
+}
+
+function accessTokenTwitch($code) : string {
+    //accessTokenTwitch
+    $url = 'https://id.twitch.tv/oauth2/token?';
+    $url .= "client_id=".CLIENT_TWITCHID;
+    $url .= "&client_secret=".CLIENT_TWITCHSECRET;
+    $url .= "&code=$code";
+    $url .= "&grant_type=authorization_code";
+    $url .= "&redirect_uri=https://localhost/twitchauth-success";
+
     return $url;
 }
 
