@@ -1,4 +1,4 @@
-# SDK-OAUTH - ESGI 3IW2Alt-H1
+# SDK-OAUTH - ESGI 3IW2
 
 Project of Intégration SDK in ESGI
 
