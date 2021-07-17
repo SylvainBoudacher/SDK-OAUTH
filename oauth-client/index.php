@@ -28,18 +28,16 @@ function handleLogin()
         . "&scope=basic"
         . "&state=" . STATE . "'>Se connecter avec Oauth Server</a></br>";
 
+
     // Facebook
-    echo "<a href='https://www.facebook.com/v2.10/dialog/oauth?response_type=code"
-        . "&client_id=" . CLIENT_FBID
-        . "&scope=email"
-        . "&state=" . STATE
-        . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a></br>";
+    
+    echo "<a href='".getFacebookLink()."'>Se connecter avec Facebook</a></br>";
 
     // Twitch
-    echo "<a href='".getTwitchLink()."' >Se connecter avec Twitch</a><br>";
+    echo "<a href='".getTwitchLink()."'>Se connecter avec Twitch</a></br>";
 
     // Discord
-    echo "<a href='".getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
+    echo "<a href='".getDiscordOAuthLink()."'>Se connecter avec Discord</a>";
 }
 
 function getUser($params)
@@ -78,35 +76,63 @@ function handleSuccess()
 }
 
 
-
-
 // Facebook process
+function getFacebookLink() : string {
+    // Authorization code grant
+    $url = "https://www.facebook.com/v2.10/dialog/oauth?";
+    $url .= "client_id=".CLIENT_FBID;
+    $url .= "&scope=email";
+    $url .= "&response_type=code";
+    $url .= "&state=".STATE;
+    $url .= "&redirect_uri=https://localhost/fbauth-success";
+    
+    return $url;
+}
+
+function getAccessTokenFacebook($code) : string {
+    //accessTokenTwitch
+    $url = 'https://graph.facebook.com/oauth/access_token?';
+    $url .= "client_id=".CLIENT_FBID;
+    $url .= "&client_secret=".CLIENT_FBSECRET;
+    $url .= "&code=$code";
+    $url .= "&grant_type=authorization_code";
+    $url .= "&redirect_uri=https://localhost/fbauth-success&grant_type=authorization_code";
+
+    return $url;
+}
+
 
 function handleFbSuccess()
 {
+
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
-    }
-    https://auth-server/token?grant_type=authorization_code&code=...&client_id=..&client_secret=...
-    $url = "https://graph.facebook.com/oauth/access_token?grant_type=authorization_code&code={$code}&client_id=" . CLIENT_FBID . "&client_secret=" . CLIENT_FBSECRET."&redirect_uri=https://localhost/fbauth-success";
-    $result = file_get_contents($url);
-    $resultDecoded = json_decode($result, true);
-    ["access_token"=> $token] = $resultDecoded;
-    $userUrl = "https://graph.facebook.com/me?fields=id,name,email";
-    $context = stream_context_create([
-        'http' => [
-            'header' => 'Authorization: Bearer ' . $token
-        ]
-    ]);
-    echo file_get_contents($userUrl, false, $context);
+    }   
+
+    $curl = curl_init();
+
+    curl_setopt_array($curl, array(
+    CURLOPT_URL => getAccessTokenFacebook($code),
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => '',
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 0,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => 'POST',
+    ));
+
+    $response = curl_exec($curl);
+
+    curl_close($curl);
+    echo $response;
+
 }
 
 
 
-
 // Twitch process
-
 function handleTwitchSuccess() 
 {
     ["state" => $state, "code" => $code] = $_GET;
@@ -146,7 +172,7 @@ function getTwitchLink() : string {
     return $url;
 }
 
-function accessTokenTwitch($code) : string {
+function getAccessTokenTwitch($code) : string {
     //accessTokenTwitch
     $url = 'https://id.twitch.tv/oauth2/token?';
     $url .= "client_id=".CLIENT_TWITCHID;
@@ -162,7 +188,6 @@ function accessTokenTwitch($code) : string {
 
 
 // Discord process
-
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
@@ -207,9 +232,6 @@ function getDiscordOAuthLink() : string {
 
     return $url;
 }
-
-
-
 
 
 /**
