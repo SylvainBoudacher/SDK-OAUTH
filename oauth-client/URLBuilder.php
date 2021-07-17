@@ -44,4 +44,31 @@ class URLBuilder {
         return $url;
     }
 
+    
+
+    // Facebook
+
+    public static function getFacebookLink() : string {
+        // Authorization code grant
+        $url = "https://www.facebook.com/v2.10/dialog/oauth?";
+        $url .= "client_id=".CLIENT_FBID;
+        $url .= "&scope=email";
+        $url .= "&response_type=code";
+        $url .= "&state=".STATE;
+        $url .= "&redirect_uri=https://localhost/fbauth-success";
+        
+        return $url;
+    }
+    
+    public static function getAccessTokenFacebook($code) : string {
+        //accessTokenTwitch
+        $url = 'https://graph.facebook.com/oauth/access_token?';
+        $url .= "client_id=".CLIENT_FBID;
+        $url .= "&client_secret=".CLIENT_FBSECRET;
+        $url .= "&code=$code";
+        $url .= "&grant_type=authorization_code";
+        $url .= "&redirect_uri=https://localhost/fbauth-success&grant_type=authorization_code";
+    
+        return $url;
+    }
 }

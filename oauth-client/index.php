@@ -20,20 +20,18 @@ const CLIENT_DISCORD_SECRET = "hjYqMBj76NilE8Jnfd_MTF1hgUfDgDAa";
 
 const STATE = "fdzefzefze";
 
-function handleLogin()
-{
+function handleLogin() {
     // http://.../auth?response_type=code&client_id=...&scope=...&state=...
     echo "<h1>Login with OAUTH</h1>";
+
     // Oauth
     echo "<a href='http://localhost:8081/auth?response_type=code"
         . "&client_id=" . CLIENT_ID
         . "&scope=basic"
         . "&state=" . STATE . "'>Se connecter avec Oauth Server</a></br>";
 
-
     // Facebook
-    
-    echo "<a href='".getFacebookLink()."'>Se connecter avec Facebook</a></br>";
+    echo "<a href='".URLBuilder::getFacebookLink()."'>Se connecter avec Facebook</a></br>";
 
     // Twitch
     echo "<a href='".URLBuilder::getTwitchLink()."' >Se connecter avec Twitch</a><br>";
@@ -42,8 +40,7 @@ function handleLogin()
     echo "<a href='".URLBuilder::getDiscordOAuthLink()."' >Se connecter avec Discord</a>";
 }
 
-function getUser($params)
-{
+function getUser($params) {
     $url = "http://oauth-server:8081/token?client_id=" . CLIENT_ID . "&client_secret=" . CLIENT_SECRET . "&" . http_build_query($params);
     $result = file_get_contents($url);
     $result = json_decode($result, true);
@@ -58,14 +55,12 @@ function getUser($params)
     echo file_get_contents($apiUrl, false, $context);
 }
 
-function handleError()
-{
+function handleError() {
     ["state" => $state] = $_GET;
     echo "{$state} : Request cancelled";
 }
 
-function handleSuccess()
-{
+function handleSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -79,34 +74,8 @@ function handleSuccess()
 
 
 // Facebook process
-function getFacebookLink() : string {
-    // Authorization code grant
-    $url = "https://www.facebook.com/v2.10/dialog/oauth?";
-    $url .= "client_id=".CLIENT_FBID;
-    $url .= "&scope=email";
-    $url .= "&response_type=code";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/fbauth-success";
-    
-    return $url;
-}
 
-function getAccessTokenFacebook($code) : string {
-    //accessTokenTwitch
-    $url = 'https://graph.facebook.com/oauth/access_token?';
-    $url .= "client_id=".CLIENT_FBID;
-    $url .= "&client_secret=".CLIENT_FBSECRET;
-    $url .= "&code=$code";
-    $url .= "&grant_type=authorization_code";
-    $url .= "&redirect_uri=https://localhost/fbauth-success&grant_type=authorization_code";
-
-    return $url;
-}
-
-
-function handleFbSuccess()
-{
-
+function handleFbSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -115,7 +84,7 @@ function handleFbSuccess()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => getAccessTokenFacebook($code),
+    CURLOPT_URL => URLBuilder::getAccessTokenFacebook($code),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -129,14 +98,13 @@ function handleFbSuccess()
 
     curl_close($curl);
     echo $response;
-
 }
 
 
 
 // Twitch process
-function handleTwitchSuccess() 
-{
+
+function handleTwitchSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -159,11 +127,11 @@ function handleTwitchSuccess()
 
     curl_close($curl);
     echo $response;
-    
 }
 
 
 // Discord process
+
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
