@@ -1,8 +1,16 @@
 <?php
+// OATH
 const CLIENT_ID = "client_60a3778e70ef02.05413444";
 const CLIENT_FBID = "3648086378647793";
+
+// Facebook
 const CLIENT_SECRET = "cd989e9a4b572963e23fe39dc14c22bbceda0e60";
 const CLIENT_FBSECRET = "1b5d764e7a527c2b816259f575a59942";
+
+// Twitch
+const CLIENT_TWITCHID = "0eoml14jrvzzwdfztbq29fhtml2xjg";
+const CLIENT_TWITCHSECRET = "rtfj833leivnn52xulhd0pifsoe1ez";
+
 const STATE = "fdzefzefze";
 function handleLogin()
 {
@@ -17,6 +25,9 @@ function handleLogin()
         . "&scope=email"
         . "&state=" . STATE
         . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a>";
+    echo "<a href='https://id.twitch.tv/oauth2/authorize?"
+        . "client_id=" . CLIENT_TWITCHID
+        . "&redirect_uri=https://localhost/twitchauth-success'>Se connecter avec Twitch</a>";
 }
 
 function handleError()
@@ -90,6 +101,9 @@ switch ($route) {
         handleSuccess();
         break;
     case '/fbauth-success':
+        handleFbSuccess();
+        break;
+    case '/twitchauth-success':
         handleFbSuccess();
         break;
     case '/auth-cancel':
