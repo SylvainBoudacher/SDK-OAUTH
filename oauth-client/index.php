@@ -1,4 +1,7 @@
 <?php
+
+require("URLBuilder.php");
+
 // OATH
 const CLIENT_ID = "client_60a3778e70ef02.05413444";
 const CLIENT_SECRET = "cd989e9a4b572963e23fe39dc14c22bbceda0e60";
@@ -15,33 +18,39 @@ const CLIENT_TWITCHSECRET = "rtfj833leivnn52xulhd0pifsoe1ez";
 const CLIENT_DISCORD_ID = "865976478662787072";
 const CLIENT_DISCORD_SECRET = "hjYqMBj76NilE8Jnfd_MTF1hgUfDgDAa";
 
+// State : To protecte against CSRF attacks
 const STATE = "fdzefzefze";
 
-function handleLogin()
-{
-    // http://.../auth?response_type=code&client_id=...&scope=...&state=...
-    echo "<h1>Login with OAUTH</h1>";
-    
-    // Oauth
-    echo "<a href='http://localhost:8081/auth?response_type=code"
-        . "&client_id=" . CLIENT_ID
-        . "&scope=basic"
-        . "&state=" . STATE . "'>Se connecter avec Oauth Server</a></br>";
+// OAuth Links used inside this SDK
+const O_AUTH_APIS = [
+    "homeMade" => "http://localhost:8081/auth?response_type=code",
+    "discord" => "https://discord.com/api/oauth2/authorize?response_type=code",
+    "twitch" => "https://id.twitch.tv/oauth2/authorize?response_type=code",
+    "facebook" => "https://www.facebook.com/v2.10/dialog/oauth?response_type=code"
+];
 
+function handleLogin() {
 
-    // Facebook
-    
-    echo "<a href='".getFacebookLink()."'>Se connecter avec Facebook</a></br>";
+    $homeMade = URLBuilder::getOAuthToken(O_AUTH_APIS["homeMade"], CLIENT_ID, "basic", null, STATE);
+    $discordLink = URLBuilder::getOAuthToken(O_AUTH_APIS["discord"], CLIENT_DISCORD_ID, "identify", "https://localhost/discord-auth-success", STATE);
+    $twitchLink = URLBuilder::getOAuthToken(O_AUTH_APIS["twitch"], CLIENT_TWITCHID, "channel_read", "https://localhost/twitchauth-success", STATE);
+    $FbLink = URLBuilder::getOAuthToken(O_AUTH_APIS["facebook"], CLIENT_FBID, "email", "https://localhost/fbauth-success", STATE);
 
-    // Twitch
-    echo "<a href='".getTwitchLink()."'>Se connecter avec Twitch</a></br>";
+    $html = "<h1>Login with OAUTH</h1>
+    <a href='.$homeMade.'>Se connecter avec Oauth fait maison</a><br>
+    <a href='".$FbLink."'>Se connecter avec Facebook</a></br>
+    <a href='".$twitchLink."' >Se connecter avec Twitch</a><br>
+    <a href='".$discordLink."' >Se connecter avec Discord</a>";
 
-    // Discord
-    echo "<a href='".getDiscordOAuthLink()."'>Se connecter avec Discord</a>";
+    echo $html;
 }
 
-function getUser($params)
-{
+
+
+
+// Home made OAuth processes
+
+function getUser($params) {
     $url = "http://oauth-server:8081/token?client_id=" . CLIENT_ID . "&client_secret=" . CLIENT_SECRET . "&" . http_build_query($params);
     $result = file_get_contents($url);
     $result = json_decode($result, true);
@@ -56,14 +65,12 @@ function getUser($params)
     echo file_get_contents($apiUrl, false, $context);
 }
 
-function handleError()
-{
+function handleError() {
     ["state" => $state] = $_GET;
     echo "{$state} : Request cancelled";
 }
 
-function handleSuccess()
-{
+function handleSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -76,35 +83,11 @@ function handleSuccess()
 }
 
 
+
+
 // Facebook process
-function getFacebookLink() : string {
-    // Authorization code grant
-    $url = "https://www.facebook.com/v2.10/dialog/oauth?";
-    $url .= "client_id=".CLIENT_FBID;
-    $url .= "&scope=email";
-    $url .= "&response_type=code";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/fbauth-success";
-    
-    return $url;
-}
 
-function getAccessTokenFacebook($code) : string {
-    //accessTokenTwitch
-    $url = 'https://graph.facebook.com/oauth/access_token?';
-    $url .= "client_id=".CLIENT_FBID;
-    $url .= "&client_secret=".CLIENT_FBSECRET;
-    $url .= "&code=$code";
-    $url .= "&grant_type=authorization_code";
-    $url .= "&redirect_uri=https://localhost/fbauth-success&grant_type=authorization_code";
-
-    return $url;
-}
-
-
-function handleFbSuccess()
-{
-
+function handleFbSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -113,7 +96,7 @@ function handleFbSuccess()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => getAccessTokenFacebook($code),
+    CURLOPT_URL => URLBuilder::getAccessTokenFacebook($code),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -127,14 +110,13 @@ function handleFbSuccess()
 
     curl_close($curl);
     echo $response;
-
 }
 
 
 
 // Twitch process
-function handleTwitchSuccess() 
-{
+
+function handleTwitchSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
@@ -143,7 +125,7 @@ function handleTwitchSuccess()
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => accessTokenTwitch($code),
+    CURLOPT_URL => URLBuilder::getAccessTokenTwitch($code),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -157,37 +139,13 @@ function handleTwitchSuccess()
 
     curl_close($curl);
     echo $response;
-    
-}
-
-function getTwitchLink() : string {
-    // Authorization code grant
-    $url = "https://id.twitch.tv/oauth2/authorize?";
-    $url .= "client_id=".CLIENT_TWITCHID;
-    $url .= "&scope=channel_read";
-    $url .= "&response_type=code";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/twitchauth-success";
-    
-    return $url;
-}
-
-function getAccessTokenTwitch($code) : string {
-    //accessTokenTwitch
-    $url = 'https://id.twitch.tv/oauth2/token?';
-    $url .= "client_id=".CLIENT_TWITCHID;
-    $url .= "&client_secret=".CLIENT_TWITCHSECRET;
-    $url .= "&code=$code";
-    $url .= "&grant_type=authorization_code";
-    $url .= "&redirect_uri=https://localhost/twitchauth-success";
-
-    return $url;
 }
 
 
 
 
 // Discord process
+
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
@@ -219,28 +177,9 @@ function handleDiscordSuccess() {
 }
 
 
-function getDiscordOAuthLink() : string {
-    
-    // Authorization code grant
-    $url = "https://discord.com/api/oauth2/authorize";
-    $url .= "?response_type=code";
-    $url .= "&client_id=".CLIENT_DISCORD_ID;
-    $url .= "&scope=identify";
-    $url .= "&state=".STATE;
-    $url .= "&redirect_uri=https://localhost/discord-auth-success";
-    $url .= "&prompt=consent";
-
-    return $url;
-}
 
 
-/**
- * AUTH CODE WORKFLOW
- * => Generate link (/login)
- * => Get Code (/auth-success)
- * => Exchange Code <> Token (/auth-success)
- * => Exchange Token <> User info (/auth-success)
- */
+// Custom router
 
 $route = strtok($_SERVER["REQUEST_URI"], "?");
 switch ($route) {
