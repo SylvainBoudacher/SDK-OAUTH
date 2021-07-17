@@ -25,6 +25,8 @@ function handleLogin()
         . "&scope=email"
         . "&state=" . STATE
         . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a>";
+
+    echo "<a href='".getDiscordLink()."' >Se connecter avec Discord</a>";
 }
 
 function handleError()
@@ -100,6 +102,9 @@ switch ($route) {
     case '/fbauth-success':
         handleFbSuccess();
         break;
+    case '/discord-auth-success':
+        handleDiscordSuccess();
+        break;
     case '/auth-cancel':
         handleError();
         break;
@@ -122,4 +127,23 @@ switch ($route) {
     default:
         http_response_code(404);
         break;
+}
+
+function handleDiscordSuccess() {
+    echo "Trigger de la fonction discord success pour test";
+    die();
+}
+
+
+function getDiscordLink() : string {
+    // Authorization code grant
+    $url = "https://discord.com/api/oauth2/authorize";
+    $url .= "?response_type=code";
+    $url .= "&client_id=".CLIENT_DISCORD_ID;
+    $url .= "&scope=identify";
+    $url .= "&state=".STATE;
+    $url .= "&redirect_uri=https://localhost/discord-auth-success";
+    $url .= "&prompt=consent";
+
+    return $url;
 }
