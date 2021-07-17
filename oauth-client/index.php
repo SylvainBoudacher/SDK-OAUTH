@@ -31,11 +31,7 @@ function handleLogin()
         . "&redirect_uri=https://localhost/fbauth-success'>Se connecter avec Facebook</a></br>";
 
     // Twitch
-    echo "<a href='https://id.twitch.tv/oauth2/authorize?"
-        . "client_id=" . CLIENT_TWITCHID
-        . "&scope=user_read"
-        . "&response_type=code"
-        . "&redirect_uri=https://localhost/twitchauth-success'>Se connecter avec Twitch</a>";
+    echo "<a href='".getTwitchLink()."' >Se connecter avec Twitch</a>";
 }
 
 function handleError()
@@ -96,6 +92,19 @@ function getUser($params)
     ]);
     echo file_get_contents($apiUrl, false, $context);
 }
+
+function getTwitchLink() : string {
+    // Authorization code grant
+    $url = "https://id.twitch.tv/oauth2/authorize?";
+    $url .= "client_id=".CLIENT_TWITCHID;
+    $url .= "&scope=channel_read";
+    $url .= "&response_type=code";
+    $url .= "&state=".STATE;
+    $url .= "&redirect_uri=https://localhost/twitchauth-success";
+    
+    return $url;
+}
+
 
 /**
  * AUTH CODE WORKFLOW
