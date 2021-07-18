@@ -1,6 +1,6 @@
 <?php
 
-require("URLBuilder.php");
+require("Helpers.php");
 
 // OATH
 const CLIENT_ID = "client_60a3778e70ef02.05413444";
@@ -29,18 +29,54 @@ const O_AUTH_APIS = [
     "facebook" => "https://www.facebook.com/v2.10/dialog/oauth?response_type=code"
 ];
 
+// Access Token used inside this SDK
+const ACCESS_TOKEN_APIS = [
+    "discord" => "https://discord.com/api/oauth2/token",
+    "twitch" => "https://id.twitch.tv/oauth2/token",
+    "facebook" => "https://graph.facebook.com/oauth/access_token"
+];
+
+// Successful redirect from APIs links
+const SUCCESS_REDIRECT = [
+    "discord" => "https://localhost/discord-auth-success",
+    "twitch" => "https://localhost/twitchauth-success",
+    "facebook" => "https://localhost/fbauth-success"
+];
+
 function handleLogin() {
 
-    $homeMade = URLBuilder::getOAuthToken(O_AUTH_APIS["homeMade"], CLIENT_ID, "basic", null, STATE);
-    $discordLink = URLBuilder::getOAuthToken(O_AUTH_APIS["discord"], CLIENT_DISCORD_ID, "identify", "https://localhost/discord-auth-success", STATE);
-    $twitchLink = URLBuilder::getOAuthToken(O_AUTH_APIS["twitch"], CLIENT_TWITCHID, "channel_read", "https://localhost/twitchauth-success", STATE);
-    $FbLink = URLBuilder::getOAuthToken(O_AUTH_APIS["facebook"], CLIENT_FBID, "email", "https://localhost/fbauth-success", STATE);
+    $homeMade = Helpers::urlBuilder(O_AUTH_APIS["homeMade"], [
+        "client_id" => CLIENT_ID,
+        "scope" => "basic",
+        "state" => STATE
+    ]);
+
+    $FbLink = Helpers::urlBuilder(O_AUTH_APIS["facebook"], [
+        "client_id" => CLIENT_FBID,
+        "scope" => "email",
+        "redirect_uri" => SUCCESS_REDIRECT["facebook"],
+        "state" => STATE
+    ]);
+
+    $twitchLink = Helpers::urlBuilder(O_AUTH_APIS["twitch"], [
+        "client_id" => CLIENT_TWITCHID,
+        "scope" => "channel_read",
+        "redirect_uri" => SUCCESS_REDIRECT["twitch"],
+        "state" => STATE
+    ]);
+
+    $discordLink = Helpers::urlBuilder(O_AUTH_APIS["discord"], [
+        "client_id" => CLIENT_DISCORD_ID,
+        "scope" => "identify",
+        "redirect_uri" => SUCCESS_REDIRECT["discord"],
+        "state" => STATE
+    ]);
 
     $html = "<h1>Login with OAUTH</h1>
     <a href='.$homeMade.'>Se connecter avec Oauth fait maison</a><br>
     <a href='".$FbLink."'>Se connecter avec Facebook</a></br>
     <a href='".$twitchLink."' >Se connecter avec Twitch</a><br>
-    <a href='".$discordLink."' >Se connecter avec Discord</a>";
+    <a href='".$discordLink."' >Se connecter avec Discord</a><br>";
 
     echo $html;
 }
@@ -83,20 +119,26 @@ function handleSuccess() {
 }
 
 
-
-
 // Facebook process
 
 function handleFbSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
-    }   
+    }
+    
+    $url = Helpers::urlBuilder(ACCESS_TOKEN_APIS["facebook"], [
+        "client_id" => CLIENT_FBID,
+        "client_secret" => CLIENT_FBSECRET,
+        "code" => $code,
+        "grant_type" => "authorization_code",
+        "redirect_uri" => SUCCESS_REDIRECT["facebook"]
+    ]);
 
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => URLBuilder::getAccessTokenFacebook($code),
+    CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -120,12 +162,20 @@ function handleTwitchSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
-    }    
+    }
+    
+    $url = Helpers::urlBuilder(ACCESS_TOKEN_APIS["twitch"], [
+        "client_id" => CLIENT_TWITCHID,
+        "client_secret" => CLIENT_TWITCHSECRET,
+        "code" => $code,
+        "grant_type" => "authorization_code",
+        "redirect_uri" => SUCCESS_REDIRECT["twitch"]
+    ]);
     
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => URLBuilder::getAccessTokenTwitch($code),
+    CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -146,16 +196,25 @@ function handleTwitchSuccess() {
 
 // Discord process
 
+// Note : this one requires application/x-www-form-urlencoded as content type according to the Discord documentation
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid discord state");
     }
 
+    $queryParams = Helpers::queryParamsBuilder([
+        "client_id" => CLIENT_DISCORD_ID,
+        "client_secret" => CLIENT_DISCORD_SECRET,
+        "grant_type" => "authorization_code",
+        "code" => $code,
+        "redirect_uri" => SUCCESS_REDIRECT["discord"]
+    ]);
+
     $curl = curl_init();
 
     curl_setopt_array($curl, array(
-    CURLOPT_URL => 'https://discord.com/api/oauth2/token',
+    CURLOPT_URL => ACCESS_TOKEN_APIS["discord"],
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',
     CURLOPT_MAXREDIRS => 10,
@@ -163,7 +222,7 @@ function handleDiscordSuccess() {
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
     CURLOPT_CUSTOMREQUEST => 'POST',
-    CURLOPT_POSTFIELDS => 'client_id='.CLIENT_DISCORD_ID.'&client_secret='.CLIENT_DISCORD_SECRET.'&grant_type=authorization_code&code='.$code.'&redirect_uri=https%3A%2F%2Flocalhost%2Fdiscord-auth-success',
+    CURLOPT_POSTFIELDS => $queryParams,
     CURLOPT_HTTPHEADER => array(
         'Content-Type: application/x-www-form-urlencoded',
         'Cookie: __dcfduid=7b4f678bb76e4fcc8813cdb6b85fe223'
