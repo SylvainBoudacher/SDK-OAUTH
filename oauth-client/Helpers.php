@@ -11,7 +11,10 @@ class Helpers {
         $index = 0;
         foreach ($params as $paramName => $paramValue) {
             $separator = ($index === 0 && $hasAlreadyFirstParam === false) ? '?' : '&';
-            $queryParams .= $separator . $paramName . '=' . $paramValue;
+
+            if (!empty($paramValue)) {
+                $queryParams .= $separator . $paramName . '=' . $paramValue;
+            }
             $index++;
         }
 
