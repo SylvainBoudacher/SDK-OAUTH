@@ -85,7 +85,6 @@ function handleLogin() {
 
 
 // Home made OAuth processes
-
 function getUser($params) {
     $url = "http://oauth-server:8081/token?client_id=" . CLIENT_ID . "&client_secret=" . CLIENT_SECRET . "&" . http_build_query($params);
     $result = file_get_contents($url);
@@ -119,15 +118,18 @@ function handleSuccess() {
 }
 
 
-// Facebook process
+
+
+
 
 function handleFbSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid state");
     }
-    
-    $url = Helpers::urlBuilder(ACCESS_TOKEN_APIS["facebook"], [
+
+    $baseUrl = ACCESS_TOKEN_APIS["facebook"];
+    $queryParams = Helpers::queryParamsBuilder([
         "client_id" => CLIENT_FBID,
         "client_secret" => CLIENT_FBSECRET,
         "code" => $code,
@@ -135,28 +137,13 @@ function handleFbSuccess() {
         "redirect_uri" => SUCCESS_REDIRECT["facebook"]
     ]);
 
-    $curl = curl_init();
-
-    curl_setopt_array($curl, array(
-    CURLOPT_URL => $url,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => '',
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => 'POST',
-    ));
-
-    $response = curl_exec($curl);
-
-    curl_close($curl);
-    echo $response;
+    echo Helpers::curl($baseUrl, $queryParams);
 }
 
 
 
-// Twitch process
+
+
 
 function handleTwitchSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
@@ -164,82 +151,52 @@ function handleTwitchSuccess() {
         throw new RuntimeException("{$state} : invalid state");
     }
     
-    $url = Helpers::urlBuilder(ACCESS_TOKEN_APIS["twitch"], [
+    $baseUrl = ACCESS_TOKEN_APIS["twitch"];
+    $queryParams = Helpers::queryParamsBuilder([
         "client_id" => CLIENT_TWITCHID,
         "client_secret" => CLIENT_TWITCHSECRET,
         "code" => $code,
         "grant_type" => "authorization_code",
         "redirect_uri" => SUCCESS_REDIRECT["twitch"]
     ]);
-    
-    $curl = curl_init();
 
-    curl_setopt_array($curl, array(
-    CURLOPT_URL => $url,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => '',
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => 'POST',
-    ));
-
-    $response = curl_exec($curl);
-
-    curl_close($curl);
-    echo $response;
+    echo Helpers::curl($baseUrl, $queryParams);
 }
 
 
 
 
-// Discord process
 
-// Note : this one requires application/x-www-form-urlencoded as content type according to the Discord documentation
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
     if ($state !== STATE) {
         throw new RuntimeException("{$state} : invalid discord state");
     }
 
+    $baseUrl = ACCESS_TOKEN_APIS["discord"];
     $queryParams = Helpers::queryParamsBuilder([
         "client_id" => CLIENT_DISCORD_ID,
         "client_secret" => CLIENT_DISCORD_SECRET,
-        "grant_type" => "authorization_code",
         "code" => $code,
+        "grant_type" => "authorization_code",
         "redirect_uri" => SUCCESS_REDIRECT["discord"]
     ]);
 
-    $curl = curl_init();
-
-    curl_setopt_array($curl, array(
-    CURLOPT_URL => ACCESS_TOKEN_APIS["discord"],
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => '',
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => 'POST',
-    CURLOPT_POSTFIELDS => $queryParams,
-    CURLOPT_HTTPHEADER => array(
+    // Note : this one requires application/x-www-form-urlencoded as content-type according to the Discord documentation
+    $headers = [
         'Content-Type: application/x-www-form-urlencoded',
         'Cookie: __dcfduid=7b4f678bb76e4fcc8813cdb6b85fe223'
-    ),
-    ));
+    ];
 
-    $response = curl_exec($curl);
-
-    curl_close($curl);
-    echo $response;
+    echo Helpers::curl($baseUrl, $queryParams, $headers);
 }
 
 
 
 
-// Custom router
 
+
+// Custom router
 $route = strtok($_SERVER["REQUEST_URI"], "?");
 switch ($route) {
     case '/login':
