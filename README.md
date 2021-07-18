@@ -1,6 +1,6 @@
 # SDK-OAUTH - ESGI 3IW2
 
-Project of Intégration SDK in ESGI
+Project SDK for ESGI
 
 Goal -> create an SDK with 2 publics provider and the Facebook provider.
 
