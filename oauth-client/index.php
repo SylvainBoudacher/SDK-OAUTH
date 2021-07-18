@@ -4,7 +4,7 @@ require_once __DIR__ . '/Helpers.php';
 require_once __DIR__ . '/Plateform.php';
 
 // State : To protecte against CSRF attacks
-const STATE = "fdzefzefze";
+$state = Helpers::generateRandomString(64);
 
 $twitch = new Plateform(
     "twitch",
@@ -13,7 +13,7 @@ $twitch = new Plateform(
     "0eoml14jrvzzwdfztbq29fhtml2xjg",
     "rtfj833leivnn52xulhd0pifsoe1ez",
     "https://localhost/twitchauth-success",
-    STATE
+    $state
 );
 
 $discord = new Plateform(
@@ -23,7 +23,7 @@ $discord = new Plateform(
     "865976478662787072",
     "hjYqMBj76NilE8Jnfd_MTF1hgUfDgDAa",
     "https://localhost/discord-auth-success",
-    STATE
+    $state
 );
 
 $facebook = new Plateform(
@@ -33,7 +33,7 @@ $facebook = new Plateform(
     "496351738294763",
     "9213a3eaaf13e6f78f792bef0a5a0d37",
     "https://localhost/fbauth-success",
-    STATE
+    $state
 );
 
 $oAuthServer = new Plateform(
@@ -43,7 +43,7 @@ $oAuthServer = new Plateform(
     "client_60a3778e70ef02.05413444",
     "cd989e9a4b572963e23fe39dc14c22bbceda0e60",
     null,
-    STATE
+    $state
 );
 
 function handleLogin() {
@@ -90,7 +90,8 @@ function handleError() {
 
 function handleSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
-    if ($state !== STATE) {
+    global $state;
+    if ($state !== $state) {
         throw new RuntimeException("{$state} : invalid state");
     }
     // https://auth-server/token?grant_type=authorization_code&code=...&client_id=..&client_secret=...
@@ -105,10 +106,10 @@ function handleSuccess() {
 // Facebook processes
 function handleFbSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
-    if ($state !== STATE) {
+    global $state, $facebook;
+    if ($state !== $state) {
         throw new RuntimeException("{$state} : invalid state");
     }
-    global $facebook;
     $baseUrl = $facebook->getUrlToken();
     $queryParams = $facebook->getTokenParams($code);
     echo Helpers::curl($baseUrl, $queryParams);
@@ -117,10 +118,10 @@ function handleFbSuccess() {
 // Twitch processes
 function handleTwitchSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
-    if ($state !== STATE) {
+    global $state, $twitch;
+    if ($state !== $state) {
         throw new RuntimeException("{$state} : invalid state");
     }
-    global $twitch;
     $baseUrl = $twitch->getUrlToken();
     $queryParams = $twitch->getTokenParams($code);
     echo Helpers::curl($baseUrl, $queryParams);
@@ -129,10 +130,11 @@ function handleTwitchSuccess() {
 // DiscordProcesses
 function handleDiscordSuccess() {
     ["state" => $state, "code" => $code] = $_GET;
-    if ($state !== STATE) {
+    global $discord, $state;
+    if ($state !== $state) {
         throw new RuntimeException("{$state} : invalid discord state");
     }
-    global $discord;
+    
     $baseUrl = $discord->getUrlToken();
     $queryParams = $discord->getTokenParams($code);
     $headers = [
