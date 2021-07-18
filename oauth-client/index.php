@@ -30,8 +30,8 @@ $facebook = new Plateform(
     "facebook",
     "https://www.facebook.com/v2.10/dialog/oauth?response_type=code",
     "https://graph.facebook.com/oauth/access_token",
-    "857084295218661",
-    "00daf47f2a321185e8eac2b2887da13a",
+    "496351738294763",
+    "9213a3eaaf13e6f78f792bef0a5a0d37",
     "https://localhost/fbauth-success",
     STATE
 );
